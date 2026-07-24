@@ -1,0 +1,6 @@
+{
+  "name": "奇門遁甲自動存檔助手",
+  "description": "輸入 app.soul-treasure.net 的起盤網址，系統會自動讀取網頁盤面內容，解析九宮格中的符號、克應斷語，並自動存檔至您的 Google Sheets 試算表中。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
