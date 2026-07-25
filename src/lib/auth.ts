@@ -1,10 +1,15 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User, browserLocalPersistence, setPersistence } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Explicitly set persistence to local storage to ensure it remembers the login across sessions
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn('Unable to set Firebase Auth persistence:', err);
+});
 
 // Configure Google Auth Provider with Workspace scopes
 const provider = new GoogleAuthProvider();

@@ -1238,7 +1238,13 @@ export default function App() {
                 </div>
                 <div className="flex items-start space-x-3 text-xs text-slate-400">
                   <div className="mt-0.5 text-indigo-400">✦</div>
-                  <p>純前端安全運行，所有憑證皆在記憶體中快取，安全性極高</p>
+                  <p>
+                    純前端安全運行，所有憑證皆在本機端快取。
+                    <br />
+                    <span className="text-[11px] text-slate-500 mt-1 inline-block">
+                      ⚠️ 註：基於 Google 安全機制，授權憑證將於 1 小時後自動過期，屆時需再次點擊登入以換取新憑證。
+                    </span>
+                  </p>
                 </div>
               </div>
 
