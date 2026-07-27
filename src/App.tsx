@@ -86,6 +86,22 @@ export default function App() {
   const [isLoadingRows, setIsLoadingRows] = useState(false);
   const [rowsError, setRowsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchNotes, setSearchNotes] = useState<string>(() => {
+    try {
+      return localStorage.getItem('qimen_search_notes') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  // Save search notes to local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem('qimen_search_notes', searchNotes);
+    } catch (err) {
+      console.warn('Unable to save search notes:', err);
+    }
+  }, [searchNotes]);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [expandedCaseIndex, setExpandedCaseIndex] = useState<number | null>(null);
   const [editingDocIndex, setEditingDocIndex] = useState<number | null>(null);
@@ -2100,6 +2116,14 @@ export default function App() {
                       >
                         直符 + 生門
                       </button>
+                    </div>
+                    <div className="mt-4">
+                      <textarea
+                        value={searchNotes}
+                        onChange={(e) => setSearchNotes(e.target.value)}
+                        placeholder="在此添加您的重要資訊、筆記或自定義檢索公式..."
+                        className="w-full h-24 p-3 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-slate-300 text-sm placeholder:text-slate-600 bg-slate-900/50 resize-y"
+                      />
                     </div>
                   </div>
                 </div>
