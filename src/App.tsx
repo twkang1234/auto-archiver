@@ -1734,6 +1734,11 @@ export default function App() {
                                               🎯 印證
                                             </span>
                                           )}
+                                          {memo.category === '三宮合一' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/25 text-amber-300 border border-amber-500/40 shrink-0">
+                                              ✨ 三宮合一
+                                            </span>
+                                          )}
                                         </div>
                                         {matchedCases.length > 0 && (
                                           <button
@@ -1816,6 +1821,7 @@ export default function App() {
                                         <option value="重點觀察">重點觀察</option>
                                         <option value="本益比低">本益比低</option>
                                         <option value="印證">印證</option>
+                                        <option value="三宮合一">三宮合一</option>
                                       </select>
                                     </td>
                                     <td className="px-4 py-3.5 text-right">
