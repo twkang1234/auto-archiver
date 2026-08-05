@@ -30,7 +30,9 @@ import {
   TrendingUp,
   Trash2,
   Clock,
-  Calendar
+  Calendar,
+  Save,
+  Cloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Solar } from 'lunar-javascript';
@@ -118,6 +120,10 @@ export default function App() {
       console.warn('Unable to save journal notes:', err);
     }
   }, [journalNotes]);
+
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [isFetchingNotes, setIsFetchingNotes] = useState(false);
+  const [notesSyncTime, setNotesSyncTime] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [expandedCaseIndex, setExpandedCaseIndex] = useState<number | null>(null);
   const [editingDocIndex, setEditingDocIndex] = useState<number | null>(null);
@@ -608,6 +614,53 @@ export default function App() {
     }
   };
 
+  const fetchJournalNotesFromCloud = async () => {
+    if (!token || !spreadsheetId) return;
+    setIsFetchingNotes(true);
+    try {
+      const response = await fetch('/api/get-journal-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: token, spreadsheetId })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.notes !== undefined && data.notes !== '') {
+          setJournalNotes(data.notes);
+          setNotesSyncTime(new Date().toLocaleTimeString('zh-TW', { hour12: false }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch journal notes from cloud', err);
+    } finally {
+      setIsFetchingNotes(false);
+    }
+  };
+
+  const saveJournalNotesToCloud = async () => {
+    if (!token || !spreadsheetId) {
+      setToast({ type: 'error', message: '❌ 請先登入 Google 帳號' });
+      return;
+    }
+    setIsSavingNotes(true);
+    try {
+      const response = await fetch('/api/save-journal-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: token, spreadsheetId, notes: journalNotes })
+      });
+      if (!response.ok) throw new Error('Failed to save');
+      
+      setNotesSyncTime(new Date().toLocaleTimeString('zh-TW', { hour12: false }));
+      setToast({ type: 'success', message: '✅ 心得記錄已儲存至雲端試算表' });
+    } catch (err: any) {
+      console.error(err);
+      setToast({ type: 'error', message: '❌ 儲存心得記錄失敗' });
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
   const handleSaveDocUrl = async (originalRowIndex: number) => {
     if (!token || !spreadsheetId) return;
     setIsUpdatingDoc(true);
@@ -787,6 +840,13 @@ export default function App() {
       fetchArchivedRows();
     }
   }, [token]);
+
+  // Automatically fetch journal notes when spreadsheetId is available
+  useEffect(() => {
+    if (token && spreadsheetId) {
+      fetchJournalNotesFromCloud();
+    }
+  }, [token, spreadsheetId]);
 
   const normalizeQimenText = (text: string): string => {
     if (!text) return '';
@@ -2655,15 +2715,43 @@ export default function App() {
                     <span>心得記錄</span>
                   </h2>
                 </div>
-                <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 flex flex-col min-h-0 mt-4">
                   <textarea
                     value={journalNotes}
                     onChange={(e) => setJournalNotes(e.target.value)}
                     placeholder="在此自由書寫您的心得、筆記或觀察重點..."
-                    className="flex-1 w-full p-4 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-300 text-sm placeholder:text-slate-600 bg-black/40 resize-none"
+                    className="flex-1 w-full p-4 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-300 text-sm placeholder:text-slate-600 bg-black/40 resize-none mb-4"
                   />
-                  <div className="text-xs text-slate-500 mt-2 text-right shrink-0">
-                    * 筆記內容將自動儲存於本機瀏覽器中
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                    <div className="flex items-center space-x-2 text-xs text-slate-400">
+                      {isFetchingNotes ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
+                          <span>正在從雲端讀取...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Cloud className="w-4 h-4 text-emerald-500/70" />
+                          <span>
+                            {notesSyncTime 
+                              ? `最後同步於雲端：${notesSyncTime}`
+                              : '已自動儲存於本機瀏覽器'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      onClick={saveJournalNotesToCloud}
+                      disabled={isSavingNotes || !token}
+                      className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSavingNotes ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      <span>儲存至雲端</span>
+                    </button>
                   </div>
                 </div>
               </motion.div>

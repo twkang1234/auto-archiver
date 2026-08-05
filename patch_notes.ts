@@ -1,0 +1,3 @@
+export const fetchJournalNotes = async (token: string, spreadsheetId: string) => {
+  // ...
+}

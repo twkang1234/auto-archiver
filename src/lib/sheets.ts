@@ -147,3 +147,69 @@ export async function appendRowToSheet(
     throw new Error(`寫入資料失敗: ${res.status} ${errText}`);
   }
 }
+
+// Check if "心得筆記" sheet exists, create if not
+export async function ensureJournalSheetExists(spreadsheetId: string, accessToken: string) {
+  const getUrl = `https://www.googleapis.com/sheets/v4/spreadsheets/${spreadsheetId}`;
+  const res = await fetch(getUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return;
+  
+  const data = await res.json();
+  const sheets = data.sheets || [];
+  const hasNotesSheet = sheets.some((s: any) => s.properties.title === '心得筆記');
+  
+  if (!hasNotesSheet) {
+    const batchUrl = `https://www.googleapis.com/sheets/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
+    await fetch(batchUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: '心得筆記',
+              },
+            },
+          },
+        ],
+      }),
+    });
+  }
+}
+
+// Read journal notes from "心得筆記!A1"
+export async function readJournalNotes(spreadsheetId: string, accessToken: string): Promise<string> {
+  const readUrl = `https://www.googleapis.com/sheets/v4/spreadsheets/${spreadsheetId}/values/心得筆記!A1`;
+  const res = await fetch(readUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return '';
+  const data = await res.json();
+  if (data.values && data.values.length > 0 && data.values[0].length > 0) {
+    return data.values[0][0];
+  }
+  return '';
+}
+
+// Write journal notes to "心得筆記!A1"
+export async function writeJournalNotes(spreadsheetId: string, accessToken: string, notes: string) {
+  const writeUrl = `https://www.googleapis.com/sheets/v4/spreadsheets/${spreadsheetId}/values/心得筆記!A1?valueInputOption=USER_ENTERED`;
+  await fetch(writeUrl, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      range: '心得筆記!A1',
+      majorDimension: 'ROWS',
+      values: [[notes]],
+    }),
+  });
+}

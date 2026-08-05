@@ -907,6 +907,29 @@ app.post("/api/delete-sheet-row", async (req, res) => {
   }
 });
 
+// Set up server
+async function startServer() {
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
+
 app.post("/api/get-journal-notes", async (req, res) => {
   try {
     const { accessToken, spreadsheetId } = req.body;
@@ -996,26 +1019,25 @@ app.post("/api/save-journal-notes", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-// Set up server
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        range: "心得筆記!A1",
+        majorDimension: 'ROWS',
+        values: [[notes || ""]],
+      }),
     });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({ error: `Save failed: ${errText}` });
+    }
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error("Error saving journal notes:", err);
+    return res.status(500).json({ error: err.message });
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-startServer();
-
+});
