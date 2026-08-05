@@ -81,7 +81,7 @@ export default function App() {
   const [sessionLogs, setSessionLogs] = useState<{ name: string; url: string; time: string }[]>([]);
 
   // Search and Archive view states
-  const [activeTab, setActiveTab] = useState<'parse' | 'search'>('parse');
+  const [activeTab, setActiveTab] = useState<'parse' | 'search' | 'notes'>('parse');
   const [archivedRows, setArchivedRows] = useState<any[][]>([]);
   const [isLoadingRows, setIsLoadingRows] = useState(false);
   const [rowsError, setRowsError] = useState<string | null>(null);
@@ -94,7 +94,15 @@ export default function App() {
     }
   });
 
-  // Save search notes to local storage
+  const [journalNotes, setJournalNotes] = useState<string>(() => {
+    try {
+      return localStorage.getItem('qimen_journal_notes') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  // Save notes to local storage
   useEffect(() => {
     try {
       localStorage.setItem('qimen_search_notes', searchNotes);
@@ -102,6 +110,14 @@ export default function App() {
       console.warn('Unable to save search notes:', err);
     }
   }, [searchNotes]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qimen_journal_notes', journalNotes);
+    } catch (err) {
+      console.warn('Unable to save journal notes:', err);
+    }
+  }, [journalNotes]);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [expandedCaseIndex, setExpandedCaseIndex] = useState<number | null>(null);
   const [editingDocIndex, setEditingDocIndex] = useState<number | null>(null);
@@ -1328,6 +1344,17 @@ export default function App() {
                   </span>
                 )}
               </button>
+              <button
+                onClick={() => setActiveTab('notes')}
+                className={`flex items-center space-x-2 py-3 px-4 sm:px-6 text-xs sm:text-sm font-semibold border-b-2 transition-all ${
+                  activeTab === 'notes'
+                    ? 'border-emerald-500 text-emerald-400 bg-emerald-950/20'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                } rounded-t-xl`}
+              >
+                <Edit2 className="w-4 h-4 text-emerald-400" />
+                <span>心得記錄</span>
+              </button>
             </div>
 
             {activeTab === 'parse' ? (
@@ -2056,7 +2083,7 @@ export default function App() {
                   </motion.div>
                 )}
               </>
-            ) : (
+            ) : activeTab === 'search' ? (
               /* SEARCH DASHBOARD VIEW */
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -2615,7 +2642,32 @@ export default function App() {
                   </div>
                 )}
               </motion.div>
-            )}
+            ) : activeTab === 'notes' ? (
+              /* NOTES VIEW */
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-6 sm:p-8 space-y-6 flex flex-col h-[calc(100vh-250px)] min-h-[500px]"
+              >
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800/50 shrink-0">
+                  <h2 className="font-display font-bold text-xl text-white tracking-tight flex items-center space-x-2">
+                    <Edit2 className="w-5 h-5 text-emerald-400" />
+                    <span>心得記錄</span>
+                  </h2>
+                </div>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <textarea
+                    value={journalNotes}
+                    onChange={(e) => setJournalNotes(e.target.value)}
+                    placeholder="在此自由書寫您的心得、筆記或觀察重點..."
+                    className="flex-1 w-full p-4 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-300 text-sm placeholder:text-slate-600 bg-black/40 resize-none"
+                  />
+                  <div className="text-xs text-slate-500 mt-2 text-right shrink-0">
+                    * 筆記內容將自動儲存於本機瀏覽器中
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
 
           </div>
         )}
