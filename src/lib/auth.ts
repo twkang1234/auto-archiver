@@ -100,12 +100,16 @@ export const getAccessToken = async (): Promise<string | null> => {
 };
 
 // Sign out
-export const logout = async () => {
+export const logout = async (clearEmail: boolean = false) => {
   await auth.signOut();
   cachedAccessToken = null;
-  cachedEmail = null;
+  if (clearEmail) {
+    cachedEmail = null;
+  }
   try {
     localStorage.removeItem('g_access_token');
-    localStorage.removeItem('g_last_email');
+    if (clearEmail) {
+      localStorage.removeItem('g_last_email');
+    }
   } catch (e) {}
 };

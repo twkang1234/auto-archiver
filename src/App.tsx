@@ -391,9 +391,9 @@ export default function App() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (clearEmail: boolean = false) => {
     try {
-      await logout();
+      await logout(clearEmail);
       setUser(null);
       setToken(null);
       setNeedsAuth(true);
@@ -525,6 +525,7 @@ export default function App() {
         const errData = await response.json();
         const errorMsg = errData.error || '存檔至 Google Sheets 失敗';
         const isAuth = response.status === 401 || errData.isAuthError || errorMsg.includes('401') || errorMsg.toLowerCase().includes('token') || errorMsg.includes('授權');
+        if (isAuth) { handleLogout(); }
         const err = new Error(isAuth ? '您的 Google 登入或授權已過期，請重新登入！' : errorMsg);
         if (isAuth) {
           (err as any).isAuthError = true;
@@ -682,6 +683,7 @@ export default function App() {
         const errData = await response.json();
         const errorMsg = errData.error || '更新試算表資料失敗';
         const isAuth = response.status === 401 || errData.isAuthError || errorMsg.includes('401') || errorMsg.toLowerCase().includes('token') || errorMsg.includes('授權');
+        if (isAuth) { handleLogout(); }
         const err = new Error(isAuth ? '您的 Google 登入或授權已過期，請重新登入！' : errorMsg);
         if (isAuth) {
           (err as any).isAuthError = true;
@@ -743,6 +745,7 @@ export default function App() {
         const errData = await response.json();
         const errorMsg = errData.error || '更新自訂股市網址與名稱失敗';
         const isAuth = response.status === 401 || errData.isAuthError || errorMsg.includes('401') || errorMsg.toLowerCase().includes('token') || errorMsg.includes('授權');
+        if (isAuth) { handleLogout(); }
         const err = new Error(isAuth ? '您的 Google 登入或授權已過期，請重新登入！' : errorMsg);
         if (isAuth) {
           (err as any).isAuthError = true;
@@ -803,6 +806,7 @@ export default function App() {
         const errData = await response.json();
         const errorMsg = errData.error || '刪除案例失敗';
         const isAuth = response.status === 401 || errData.isAuthError || errorMsg.includes('401') || errorMsg.toLowerCase().includes('token') || errorMsg.includes('授權');
+        if (isAuth) { handleLogout(); }
         const err = new Error(isAuth ? '您的 Google 登入或授權已過期，請重新登入！' : errorMsg);
         if (isAuth) {
           (err as any).isAuthError = true;
@@ -1249,7 +1253,7 @@ export default function App() {
                   {user.displayName}
                 </span>
                 <button 
-                  onClick={handleLogout}
+                  onClick={() => handleLogout(true)}
                   className="text-slate-500 hover:text-red-400 transition-colors p-0.5 rounded"
                   title="登出"
                 >
